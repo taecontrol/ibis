@@ -11,10 +11,10 @@ use League\CommonMark\Environment;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Command\Command;
 use League\CommonMark\Block\Element\FencedCode;
+use League\CommonMark\Extension\Table\TableExtension;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Spatie\CommonMarkHighlighter\FencedCodeRenderer;
-use League\CommonMark\Extension\Table\TableExtension;
 use Symfony\Component\Console\Output\OutputInterface;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
 
@@ -73,7 +73,7 @@ class BuildCommand extends Command
         $theme = $this->getTheme($currentPath, $this->themeName);
 
         $this->buildPdf(
-            $this->buildHtml($currentPath.'/content', $config),
+            $this->buildHtml($currentPath.'/content'),
             $config,
             $currentPath,
             $theme
@@ -103,10 +103,9 @@ class BuildCommand extends Command
 
     /**
      * @param  string  $path
-     * @param  array $config
      * @return string
      */
-    protected function buildHtml(string $path, array $config)
+    protected function buildHtml(string $path)
     {
         $this->output->writeln('<fg=yellow>==></> Parsing Markdown ...');
 
@@ -116,10 +115,6 @@ class BuildCommand extends Command
         $environment->addBlockRenderer(FencedCode::class, new FencedCodeRenderer([
             'html', 'php', 'js', 'bash', 'json'
         ]));
-
-        if (is_callable($config['configure_commonmark'])) {
-            call_user_func($config['configure_commonmark'], $environment);
-        }
 
         $converter = new GithubFlavoredMarkdownConverter([], $environment);
 
@@ -149,7 +144,8 @@ class BuildCommand extends Command
     private function prepareForPdf(string $html, $file)
     {
         $commands = [
-            '[break]' => '<div style="page-break-after: always;"></div>'
+            '[break]' => '<div style="page-break-after: always;"></div>',
+            '[theme]' => $this->themeName,
         ];
 
         if ($file > 1) {
@@ -201,14 +197,16 @@ class BuildCommand extends Command
 
         $pdf->setAutoBottomMargin = 'pad';
 
-        $tocLevels = $config['toc_levels'];
+        $tocLevels = [
+            'H1' => 0, 'H2' => 1
+        ];
 
         $pdf->h2toc = $tocLevels;
         $pdf->h2bookmarks = $tocLevels;
 
         $pdf->SetMargins(400, 100, 12);
 
-        if ($this->disk->isFile($currentPath.'/assets/cover.jpg')) {
+        if ($this->disk->isFile($currentPath . '/assets/cover.jpg')) {
             $this->output->writeln('<fg=yellow>==></> Adding Book Cover ...');
 
             $coverPosition = $config['cover']['position'] ?? 'position: absolute; left:0; right: 0; top: -.2; bottom: 0;';
@@ -223,10 +221,10 @@ HTML
             );
 
             $pdf->AddPage();
-        } elseif ($this->disk->isFile($currentPath.'/assets/cover.html')) {
+        } elseif ($this->disk->isFile($currentPath . '/assets/cover.html')) {
             $this->output->writeln('<fg=yellow>==></> Adding Book Cover ...');
 
-            $cover = $this->disk->get($currentPath.'/assets/cover.html');
+            $cover = $this->disk->get($currentPath . '/assets/cover.html');
 
             $pdf->WriteHTML($cover);
 
