@@ -1,5 +1,5 @@
 {
-    "name": "themsaid/ibis",
+    "name": "taecontrol/ibis",
     "description": "Markdown to PDF book builder",
     "keywords": [
         "markdown",
@@ -7,12 +7,16 @@
         "pdf",
         "php"
     ],
-    "homepage": "https://github.com/themsaid/ibis",
+    "homepage": "https://github.com/taecontrol/ibis",
     "license": "MIT",
     "authors": [
         {
             "name": "Mohamed Said",
             "email": "themsaid@gmail.com"
+        },
+        {
+            "name": "Ronald Pereira",
+            "email": "rpereira@taecontrol.com"
         }
     ],
     "bin": [
